@@ -51,17 +51,20 @@ jobs:
       - name: build dev
         env:
           REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
+          REGISTRY_ALIAS: f0z0d4n5
           REPOSITORY: altv-voice-docker
         run: ./scripts/push.sh dev $(./scripts/getVersion.sh dev)
 
       - name: build rc
         env:
           REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
+          REGISTRY_ALIAS: f0z0d4n5
           REPOSITORY: altv-voice-docker
         run: ./scripts/push.sh rc $(./scripts/getVersion.sh rc)
 
       - name: build release
         env:
           REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
+          REGISTRY_ALIAS: f0z0d4n5
           REPOSITORY: altv-voice-docker
         run: ./scripts/push.sh release $(./scripts/getVersion.sh release)
