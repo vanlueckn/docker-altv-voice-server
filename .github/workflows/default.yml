@@ -1,5 +1,9 @@
 name: DefaultCI
 
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
+
 on:
   push:
     branches: [master]
@@ -22,19 +26,42 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         name: checkout
+
       - name: install deps
         run: sudo apt-get update && sudo apt-get install -y jq wget
+
       - name: set script permissions
         run: chmod +x ./scripts/push.sh ./scripts/getVersion.sh
-      - name: login to DockerHub
-        run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::437553472787:role/github_actions_ecr
+          aws-region: us-east-1
+      
+      - name: Login to Amazon ECR Public
+        id: login-ecr-public
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: 'true'
+          registry-type: public
+
       - name: build dev
-        run: ./scripts/push.sh $IMAGE dev $(./scripts/getVersion.sh dev)
+        env:
+          REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
+          REPOSITORY: altv-voice-docker
+        run: ./scripts/push.sh dev $(./scripts/getVersion.sh dev)
+
       - name: build rc
-        run: ./scripts/push.sh $IMAGE rc $(./scripts/getVersion.sh rc)
+        env:
+          REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
+          REPOSITORY: altv-voice-docker
+        run: ./scripts/push.sh rc $(./scripts/getVersion.sh rc)
+
       - name: build release
-        run: ./scripts/push.sh $IMAGE release $(./scripts/getVersion.sh release)
-      - name: logout from DockerHub
-        run: docker logout
+        env:
+          REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
+          REPOSITORY: altv-voice-docker
+        run: ./scripts/push.sh release $(./scripts/getVersion.sh release)
