@@ -1,5 +1,5 @@
 
-FROM debian:bookworm
+FROM debian:bookworm-slim
 
 ARG BRANCH=release
 

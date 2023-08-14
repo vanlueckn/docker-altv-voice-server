@@ -14,4 +14,8 @@ port =  $ALTV_VOICE_SERVER_PORT
 secret = $ALTV_VOICE_SERVER_SECRET
 EOF
 
+cat /opt/altv/voice.toml
+
+sleep 500000
+
 ./altv-voice-server
